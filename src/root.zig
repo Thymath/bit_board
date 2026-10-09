@@ -160,8 +160,6 @@ pub const not_hg_file: BitBoard = .{ .mask = 4557430888798830399 };
 pub const not_ab_file: BitBoard = .{ .mask = 18229723555195321596 };
 
 /// pawn attacks table [side][square]
-///
-/// PLACEHOLDER
 pub const pawn_attacks: [2][64]BitBoard = init_leapers_attacks();
 
 pub fn mask_pawn_attacks(side: sides, square: u8) BitBoard {
@@ -256,12 +254,11 @@ test "board_squares: the 64 squares are numbered from a8 to h1" {
 }
 
 test "board_squares: every square of the board is declared exactly once" {
-    const fields = @typeInfo(board_squares).@"enum".fields;
-    try std.testing.expectEqual(@as(usize, 64), fields.len);
+    const info = @typeInfo(board_squares).@"enum";
+    try std.testing.expectEqual(@as(usize, 64), info.field_values.len);
 
-    var seen = [_]bool{false} ** 64;
-    inline for (fields) |field| {
-        const square: usize = @intCast(field.value);
+    var seen: [64] bool = @splat(false);
+    inline for (info.field_values) |square| {
         try std.testing.expect(square < 64);
         try std.testing.expect(!seen[square]);
         seen[square] = true;
@@ -640,7 +637,7 @@ test "sides: white and black are the only two sides to move" {
     try std.testing.expectEqual(@as(u6, 0), @intFromEnum(sides.white));
     try std.testing.expectEqual(@as(u6, 1), @intFromEnum(sides.black));
 
-    try std.testing.expectEqual(@as(usize, 2), @typeInfo(sides).@"enum".fields.len);
+    try std.testing.expectEqual(@as(usize, 2), @typeInfo(sides).@"enum".field_values.len);
 }
 
 test "file constants: a constant keeps every bit of the board outside its file" {
@@ -860,49 +857,53 @@ test "mask_pawn_attacks: a black pawn on the 1st rank attacks nothing, there is 
     }
 }
 
-// test "mask_pawn_attacks: never attacks off the board and never attacks straight ahead" {
-//     for (0..2) |side_index| {
-//         const side: sides = @enumFromInt(side_index);
-//
-//         for (0..64) |square| {
-//             const attacks = mask_pawn_attacks(side, @intCast(square));
-//             const file: i32 = @intCast(square % 8);
-//             const row: i32 = @intCast(square / 8);
-//             const towards: i32 = if (side == .white) -1 else 1;
-//
-//             var attacked_squares: usize = 0;
-//             for (0..64) |target| {
-//                 if (!attacks.isSet(@intCast(target))) continue;
-//                 attacked_squares += 1;
-//
-//                 const target_file: i32 = @intCast(target % 8);
-//                 const target_row: i32 = @intCast(target / 8);
-//
-//                 // an attack is exactly 1 file over ...
-//                 try std.testing.expect(@abs(target_file - file) == 1);
-//                 // ... and 1 rank in the direction the side of the pawn looks at
-//                 try std.testing.expectEqual(towards, target_row - row);
-//             }
-//
-//             // a pawn captures on 2 diagonals at most, and never on its own 2
-//             // ranks, which is where the table is empty for a whole rank
-//             try std.testing.expect(attacked_squares <= 2);
-//         }
-//     };
-// }
+test "mask_pawn_attacks: never attacks off the board and never attacks straight ahead" {
+    for (0..2) |side_index| {
+        const side: sides = @enumFromInt(side_index);
 
-// test "mask_pawn_attacks: every square of both sides matches the pre-calculated table" {
-//     for (0..2) |side_index| {
-//         const side: sides = @enumFromInt(side_index);
-//
-//         for (0..64) |square| {
-//             const attacks = mask_pawn_attacks(side, @intCast(square));
-//             if (attacks.mask == expected_pawn_attacks[side_index][square]) continue;
-//
-//             return error.TestUnexpectedResult;
-//         }
-//     };
-// }
+        for (0..64) |square| {
+            const attacks = mask_pawn_attacks(side, @intCast(square));
+            const file: i32 = @intCast(square % 8);
+            const row: i32 = @intCast(square / 8);
+            const towards: i32 = if (side == .white) -1 else 1;
+
+            var attacked_squares: usize = 0;
+            for (0..64) |target| {
+                if (!attacks.isSet(@intCast(target))) continue;
+                attacked_squares += 1;
+
+                const target_file: i32 = @intCast(target % 8);
+                const target_row: i32 = @intCast(target / 8);
+
+                // an attack is exactly 1 file over ...
+                try std.testing.expect(@abs(target_file - file) == 1);
+                // ... and 1 rank in the direction the side of the pawn looks at
+                try std.testing.expectEqual(towards, target_row - row);
+            }
+
+            // a pawn captures on 2 diagonals at most, and never on its own 2
+            // ranks, which is where the table is empty for a whole rank
+            try std.testing.expect(attacked_squares <= 2);
+        }
+    }
+}
+
+test "mask_pawn_attacks: every square of both sides matches the pre-calculated table" {
+    for (0..2) |side_index| {
+        const side: sides = @enumFromInt(side_index);
+
+        for (0..64) |square| {
+            const attacks = mask_pawn_attacks(side, @intCast(square));
+            if (attacks.mask == expected_pawn_attacks[side_index][square]) continue;
+
+            std.debug.print(
+                "unexpected attacks of the {s} pawn standing on {s}\n",
+                .{ @tagName(side), @tagName(@as(board_squares, @enumFromInt(square))) },
+            );
+            return error.TestUnexpectedResult;
+        }
+    }
+}
 
 test "init_leapers_attacks: fills all 128 entries of the table" {
     for (0..2) |side_index| {
