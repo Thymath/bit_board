@@ -86,7 +86,6 @@ pub const board_squares = enum {
 /// bitboard data type
 pub const BitBoard = std.bit_set.StaticBitSet(64);
 
-/// PLACEHOLDER
 pub fn print_bitboard(bitboard: BitBoard, writer: *Io.Writer) Io.Writer.Error!void {
     for (0..8) |file| {
         try writer.print("\n  {} ", .{8 - file});
@@ -160,16 +159,13 @@ pub const not_hg_file: BitBoard = .{ .mask = 4557430888798830399 };
 pub const not_ab_file: BitBoard = .{ .mask = 18229723555195321596 };
 
 /// pawn attacks table [side][square]
-pub const pawn_attacks: [2][64]BitBoard = init_leapers_attacks();
+pub const pawn_attacks: [2][64]BitBoard = init_pawn_attacks();
 
 pub fn mask_pawn_attacks(side: sides, square: u8) BitBoard {
     @setEvalBranchQuota(100_000);
     var attacks = BitBoard.empty;
-    var piece_position_board = BitBoard.empty;
 
     const rank = square / 8;
-    // Set piece on board
-    piece_position_board.set(square);
     if (side == .white) {
         if (rank == 0) {
             return attacks;
@@ -196,16 +192,62 @@ pub fn mask_pawn_attacks(side: sides, square: u8) BitBoard {
     return attacks;
 }
 
-pub fn init_leapers_attacks() [2][64]BitBoard {
-    var leapers_attacks: [2][64]BitBoard = @splat(@splat(BitBoard.empty));
+pub fn init_pawn_attacks() [2][64]BitBoard {
+    var attacks: [2][64]BitBoard = @splat(@splat(BitBoard.empty));
     for (0..2) |side_index| {
         for (0..64) |square| {
             const side: sides = @enumFromInt(side_index);
 
-            leapers_attacks[side_index][square] = mask_pawn_attacks(side, @intCast(square));
+            attacks[side_index][square] = mask_pawn_attacks(side, @intCast(square));
         }
     }
-    return leapers_attacks;
+    return attacks;
+}
+
+/// knight attacks table [square]
+pub const knight_attacks: [64]BitBoard = init_knight_attacks();
+
+pub fn mask_knight_attacks(square: u8) BitBoard {
+    @setEvalBranchQuota(100_000);
+    var attacks = BitBoard.empty;
+
+    if (not_h_file.isSet(square) and square < 48) {
+        attacks.set(square + 17);
+    }
+    if (not_hg_file.isSet(square) and square < 56) {
+        attacks.set(square + 10);
+    }
+
+    if (not_a_file.isSet(square) and square < 48) {
+        attacks.set(square + 15);
+    }
+    if (not_ab_file.isSet(square) and square < 56) {
+        attacks.set(square + 6);
+    }
+
+    if (not_a_file.isSet(square) and square > 15) {
+        attacks.set(square - 17);
+    }
+    if (not_ab_file.isSet(square) and square > 7) {
+        attacks.set(square - 10);
+    }
+
+    if (not_h_file.isSet(square) and square > 15) {
+        attacks.set(square - 15);
+    }
+    if (not_hg_file.isSet(square) and square > 7) {
+        attacks.set(square - 6);
+    }
+
+    return attacks;
+}
+
+pub fn init_knight_attacks() [64]BitBoard {
+    var attacks: [64]BitBoard = @splat(BitBoard.empty);
+    for (0..64) |square| {
+        attacks[square] = mask_knight_attacks(@intCast(square));
+    }
+    return attacks;
 }
 
 // ===========================================================================
@@ -257,7 +299,7 @@ test "board_squares: every square of the board is declared exactly once" {
     const info = @typeInfo(board_squares).@"enum";
     try std.testing.expectEqual(@as(usize, 64), info.field_values.len);
 
-    var seen: [64] bool = @splat(false);
+    var seen: [64]bool = @splat(false);
     inline for (info.field_values) |square| {
         try std.testing.expect(square < 64);
         try std.testing.expect(!seen[square]);
@@ -934,7 +976,7 @@ test "init_leapers_attacks: the table holds what mask_pawn_attacks returns for e
 
 test "init_leapers_attacks: initializing twice leaves the very same table" {
     const once = pawn_attacks;
-    _ = init_leapers_attacks();
+    _ = init_pawn_attacks();
 
     for (0..2) |side_index| {
         for (0..64) |square| {
@@ -990,6 +1032,312 @@ test "the main driver sequence: init the tables, then print every square, white 
 
         try std.testing.expectEqual(
             expected_pawn_attacks[index / 64][index % 64],
+            try std.fmt.parseInt(u64, number[0..end], 10),
+        );
+        rest = number[end..];
+    }
+}
+
+// ===========================================================================
+//
+//  Tests: pre-calculated knight attacks
+//
+// ===========================================================================
+
+/// Test only: the pre-calculated knight attack map of every square, indexed by
+/// square only, exactly as `knight_attacks` is meant to hold it.
+const expected_knight_attacks = [64]u64{
+    // a8 .. h8, a7 .. h7, ... a1 .. h1
+    0x0000_0000_0002_0400, 0x0000_0000_0005_0800, 0x0000_0000_000A_1100, 0x0000_0000_0014_2200, 0x0000_0000_0028_4400, 0x0000_0000_0050_8800, 0x0000_0000_00A0_1000, 0x0000_0000_0040_2000,
+    0x0000_0000_0204_0004, 0x0000_0000_0508_0008, 0x0000_0000_0A11_0011, 0x0000_0000_1422_0022, 0x0000_0000_2844_0044, 0x0000_0000_5088_0088, 0x0000_0000_A010_0010, 0x0000_0000_4020_0020,
+    0x0000_0002_0400_0402, 0x0000_0005_0800_0805, 0x0000_000A_1100_110A, 0x0000_0014_2200_2214, 0x0000_0028_4400_4428, 0x0000_0050_8800_8850, 0x0000_00A0_1000_10A0, 0x0000_0040_2000_2040,
+    0x0000_0204_0004_0200, 0x0000_0508_0008_0500, 0x0000_0A11_0011_0A00, 0x0000_1422_0022_1400, 0x0000_2844_0044_2800, 0x0000_5088_0088_5000, 0x0000_A010_0010_A000, 0x0000_4020_0020_4000,
+    0x0002_0400_0402_0000, 0x0005_0800_0805_0000, 0x000A_1100_110A_0000, 0x0014_2200_2214_0000, 0x0028_4400_4428_0000, 0x0050_8800_8850_0000, 0x00A0_1000_10A0_0000, 0x0040_2000_2040_0000,
+    0x0204_0004_0200_0000, 0x0508_0008_0500_0000, 0x0A11_0011_0A00_0000, 0x1422_0022_1400_0000, 0x2844_0044_2800_0000, 0x5088_0088_5000_0000, 0xA010_0010_A000_0000, 0x4020_0020_4000_0000,
+    0x0400_0402_0000_0000, 0x0800_0805_0000_0000, 0x1100_110A_0000_0000, 0x2200_2214_0000_0000, 0x4400_4428_0000_0000, 0x8800_8850_0000_0000, 0x1000_10A0_0000_0000, 0x2000_2040_0000_0000,
+    0x0004_0200_0000_0000, 0x0008_0500_0000_0000, 0x0011_0A00_0000_0000, 0x0022_1400_0000_0000, 0x0044_2800_0000_0000, 0x0088_5000_0000_0000, 0x0010_A000_0000_0000, 0x0020_4000_0000_0000,
+};
+
+test "knight_attacks: the table is indexed by square alone, the knights of both sides attack the same squares" {
+    try std.testing.expectEqual(@as(usize, 64), @typeInfo(@TypeOf(knight_attacks)).array.len);
+    try std.testing.expectEqual(BitBoard, @typeInfo(@TypeOf(knight_attacks)).array.child);
+}
+
+test "mask_knight_attacks: a knight in the middle of the board attacks the 8 squares around it" {
+    try std.testing.expectEqual(
+        @as(u64, 0x0014_2200_2214_0000), // b3, b5, c2, c6, e2, e6, f3, f5
+        mask_knight_attacks(@intFromEnum(board_squares.d4)).mask,
+    );
+    try std.testing.expectEqual(
+        @as(u64, 0x0028_4400_4428_0000), // c3, c5, d2, d6, f2, f6, g3, g5
+        mask_knight_attacks(@intFromEnum(board_squares.e4)).mask,
+    );
+    try std.testing.expectEqual(
+        @as(u64, 0x000A_1100_110A_0000), // a3, a5, b2, b6, d2, d6, e3, e5
+        mask_knight_attacks(@intFromEnum(board_squares.c4)).mask,
+    );
+    try std.testing.expectEqual(
+        @as(u64, 0x0000_1422_0022_1400), // b4, b6, c3, c7, e3, e7, f4, f6
+        mask_knight_attacks(@intFromEnum(board_squares.d5)).mask,
+    );
+}
+
+test "mask_knight_attacks: a knight on a corner attacks only the 2 squares it can reach" {
+    try std.testing.expectEqual(
+        @as(u64, 0x0000_0000_0002_0400), // b6, c7
+        mask_knight_attacks(@intFromEnum(board_squares.a8)).mask,
+    );
+    try std.testing.expectEqual(
+        @as(u64, 0x0000_0000_0040_2000), // f7, g6
+        mask_knight_attacks(@intFromEnum(board_squares.h8)).mask,
+    );
+    try std.testing.expectEqual(
+        @as(u64, 0x0004_0200_0000_0000), // b3, c2
+        mask_knight_attacks(@intFromEnum(board_squares.a1)).mask,
+    );
+    try std.testing.expectEqual(
+        @as(u64, 0x0020_4000_0000_0000), // f2, g3
+        mask_knight_attacks(@intFromEnum(board_squares.h1)).mask,
+    );
+}
+
+test "mask_knight_attacks: a knight on the a file attacks the b and the c files only, and the other way round" {
+    try std.testing.expectEqual(
+        @as(u64, 0x0002_0400_0402_0000), // b2, b6, c3, c5
+        mask_knight_attacks(@intFromEnum(board_squares.a4)).mask,
+    );
+    try std.testing.expectEqual(
+        @as(u64, 0x0000_0204_0004_0200), // b3, b7, c4, c6
+        mask_knight_attacks(@intFromEnum(board_squares.a5)).mask,
+    );
+    try std.testing.expectEqual(
+        @as(u64, 0x0204_0004_0200_0000), // b1, b5, c2, c4
+        mask_knight_attacks(@intFromEnum(board_squares.a3)).mask,
+    );
+    try std.testing.expectEqual(
+        @as(u64, 0x0000_0000_0204_0004), // b5, c6, c8
+        mask_knight_attacks(@intFromEnum(board_squares.a7)).mask,
+    );
+
+    try std.testing.expectEqual(
+        @as(u64, 0x0040_2000_2040_0000), // f3, f5, g2, g6
+        mask_knight_attacks(@intFromEnum(board_squares.h4)).mask,
+    );
+    try std.testing.expectEqual(
+        @as(u64, 0x0000_4020_0020_4000), // f4, f6, g3, g7
+        mask_knight_attacks(@intFromEnum(board_squares.h5)).mask,
+    );
+    try std.testing.expectEqual(
+        @as(u64, 0x4020_0020_4000_0000), // f2, f4, g1, g5
+        mask_knight_attacks(@intFromEnum(board_squares.h3)).mask,
+    );
+    try std.testing.expectEqual(
+        @as(u64, 0x0000_0000_4020_0020), // f6, f8, g5
+        mask_knight_attacks(@intFromEnum(board_squares.h7)).mask,
+    );
+}
+
+test "mask_knight_attacks: a knight on the b or the g file attacks the 3 or 4 squares it can reach" {
+    try std.testing.expectEqual(
+        @as(u64, 0x0008_0500_0000_0000), // a3, c3, d2
+        mask_knight_attacks(@intFromEnum(board_squares.b1)).mask,
+    );
+    try std.testing.expectEqual(
+        @as(u64, 0x0010_A000_0000_0000), // e2, f3, h3
+        mask_knight_attacks(@intFromEnum(board_squares.g1)).mask,
+    );
+    try std.testing.expectEqual(
+        @as(u64, 0x0800_0805_0000_0000), // a4, c4, d1, d3
+        mask_knight_attacks(@intFromEnum(board_squares.b2)).mask,
+    );
+    try std.testing.expectEqual(
+        @as(u64, 0x1000_10A0_0000_0000), // e1, e3, f4, h4
+        mask_knight_attacks(@intFromEnum(board_squares.g2)).mask,
+    );
+}
+
+test "mask_knight_attacks: the attacks of a square are exactly the squares a knight standing on it can reach" {
+    for (0..64) |square| {
+        const file: i32 = @intCast(square % 8);
+        const rank: i32 = @intCast(square / 8);
+
+        const attacks = mask_knight_attacks(@intCast(square));
+
+        var reachable: usize = 0;
+        for (0..64) |target| {
+            const target_file: i32 = @intCast(target % 8);
+            const target_rank: i32 = @intCast(target / 8);
+
+            const file_distance = @abs(target_file - file);
+            const rank_distance = @abs(target_rank - rank);
+
+            const is_a_knights_move =
+                (file_distance == 1 and rank_distance == 2) or
+                (file_distance == 2 and rank_distance == 1);
+
+            try std.testing.expectEqual(is_a_knights_move, attacks.isSet(@intCast(target)));
+            if (is_a_knights_move) reachable += 1;
+        }
+
+        // and there is always at least the 2 squares of the closest corner to jump to
+        try std.testing.expect(reachable >= 2);
+    }
+}
+
+test "mask_knight_attacks: every square matches the pre-calculated table" {
+    for (0..64) |square| {
+        const attacks = mask_knight_attacks(@intCast(square));
+        if (attacks.mask == expected_knight_attacks[square]) continue;
+
+        std.debug.print(
+            "unexpected attacks of the knight standing on {s}\n",
+            .{@tagName(@as(board_squares, @enumFromInt(square)))},
+        );
+        return error.TestUnexpectedResult;
+    }
+}
+
+test "knight_attacks: fills all 64 entries of the table" {
+    for (0..64) |square| {
+        if (knight_attacks[square].mask == expected_knight_attacks[square]) continue;
+
+        std.debug.print(
+            "unexpected entry for the knight standing on {s}\n",
+            .{@tagName(@as(board_squares, @enumFromInt(square)))},
+        );
+        return error.TestUnexpectedResult;
+    }
+}
+
+test "knight_attacks: the table holds what mask_knight_attacks returns for every square" {
+    for (0..64) |square| {
+        try std.testing.expectEqual(
+            mask_knight_attacks(@intCast(square)),
+            knight_attacks[square],
+        );
+    }
+}
+
+test "knight_attacks: a knight has 2 attacks on a corner, at most 4 on the edge of the board and at most 8 anywhere" {
+    for (0..64) |square| {
+        const attacks: usize = knight_attacks[square].count();
+
+        const file = square % 8;
+        const rank = square / 8;
+
+        const is_a_corner = (file == 0 or file == 7) and (rank == 0 or rank == 7);
+        const is_on_the_edge = file == 0 or file == 7 or rank == 0 or rank == 7;
+
+        try std.testing.expect(attacks <= 8);
+        if (is_a_corner) {
+            try std.testing.expectEqual(@as(usize, 2), attacks);
+        } else if (is_on_the_edge) {
+            try std.testing.expect(attacks >= 3 and attacks <= 4);
+        } else {
+            try std.testing.expect(attacks >= 4);
+        }
+    }
+}
+
+test "knight_attacks: a knight standing in the middle of the board attacks 8 squares" {
+    try std.testing.expectEqual(
+        @as(usize, 8),
+        knight_attacks[@intFromEnum(board_squares.d4)].count(),
+    );
+    try std.testing.expectEqual(
+        @as(usize, 8),
+        knight_attacks[@intFromEnum(board_squares.e4)].count(),
+    );
+    try std.testing.expectEqual(
+        @as(usize, 6),
+        knight_attacks[@intFromEnum(board_squares.c2)].count(),
+    );
+    try std.testing.expectEqual(
+        @as(usize, 4),
+        knight_attacks[@intFromEnum(board_squares.b2)].count(),
+    );
+}
+
+test "knight_attacks: the knights and the pawns standing on the same square never attack the same square" {
+    for (0..2) |side_index| {
+        for (0..64) |square| {
+            const pawn = pawn_attacks[side_index][square];
+            const knight = knight_attacks[square];
+
+            for (0..64) |target| {
+                if (!knight.isSet(@intCast(target))) continue;
+
+                try std.testing.expect(!pawn.isSet(@intCast(target)));
+            }
+        }
+    }
+}
+
+test "print_bitboard: prints the attacks of the knight standing on d4" {
+    const expected =
+        "\n" ++
+        "  8  0 0 0 0 0 0 0 0\n" ++
+        "  7  0 0 0 0 0 0 0 0\n" ++
+        "  6  0 0 1 0 1 0 0 0\n" ++
+        "  5  0 1 0 0 0 1 0 0\n" ++
+        "  4  0 0 0 0 0 0 0 0\n" ++
+        "  3  0 1 0 0 0 1 0 0\n" ++
+        "  2  0 0 1 0 1 0 0 0\n" ++
+        "  1  0 0 0 0 0 0 0 0\n" ++
+        "\n" ++
+        "     a b c d e f g h\n" ++
+        "\n" ++
+        "     BitBoard: 5666883501293568\n" ++
+        "\n";
+
+    var buffer: [2048]u8 = undefined;
+    const actual = try rendered(knight_attacks[@intFromEnum(board_squares.d4)], &buffer);
+    try std.testing.expectEqualStrings(expected, actual);
+}
+
+test "print_bitboard: prints the attacks of the knight standing on a1" {
+    const expected =
+        "\n" ++
+        "  8  0 0 0 0 0 0 0 0\n" ++
+        "  7  0 0 0 0 0 0 0 0\n" ++
+        "  6  0 0 0 0 0 0 0 0\n" ++
+        "  5  0 0 0 0 0 0 0 0\n" ++
+        "  4  0 0 0 0 0 0 0 0\n" ++
+        "  3  0 1 0 0 0 0 0 0\n" ++
+        "  2  0 0 1 0 0 0 0 0\n" ++
+        "  1  0 0 0 0 0 0 0 0\n" ++
+        "\n" ++
+        "     a b c d e f g h\n" ++
+        "\n" ++
+        "     BitBoard: 1128098930098176\n" ++
+        "\n";
+
+    var buffer: [2048]u8 = undefined;
+    const actual = try rendered(knight_attacks[@intFromEnum(board_squares.a1)], &buffer);
+    try std.testing.expectEqualStrings(expected, actual);
+}
+
+test "the main driver sequence: init the table, then print every square, a8 first" {
+    var buffer: [32 * 1024]u8 = undefined;
+    var writer: Io.Writer = .fixed(&buffer);
+    for (knight_attacks) |attacks| {
+        try print_bitboard(attacks, &writer);
+    }
+    const printed = writer.buffered();
+
+    // the driver prints one bitboard per square
+    try std.testing.expectEqual(@as(usize, 64), std.mem.count(u8, printed, "     BitBoard: "));
+
+    // and they come out in table order: a8 .. h8, a7 .. h7, ... a1 .. h1
+    var rest = printed;
+    for (0..64) |index| {
+        const marker = "     BitBoard: ";
+        const at = std.mem.indexOf(u8, rest, marker) orelse return error.TestUnexpectedResult;
+        const number = rest[at + marker.len ..];
+        const end = std.mem.indexOfScalar(u8, number, '\n') orelse return error.TestUnexpectedResult;
+
+        try std.testing.expectEqual(
+            expected_knight_attacks[index],
             try std.fmt.parseInt(u64, number[0..end], 10),
         );
         rest = number[end..];
