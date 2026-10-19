@@ -26,18 +26,19 @@ pub fn main(init: std.process.Init) !void {
 
     var bit_board: BitBoard = .empty;
     // bit_board.setSquare(.d4);
-    bit_board.setSquare(.c5);
-    bit_board.setSquare(.e5);
+    bit_board.setSquare(.h4);
+    bit_board.setSquare(.h2);
 
-    bit_board.setSquare(.c6);
-    bit_board.setSquare(.d6);
-    bit_board.setSquare(.e6);
+    bit_board.setSquare(.g4);
+    bit_board.setSquare(.g3);
+    bit_board.setSquare(.g2);
 
-    bit_board.setSquare(.e4);
-    bit_board.setSquare(.d4);
-    bit_board.setSquare(.c4);
+    // bit_board.setSquare(.e4);
+    // bit_board.setSquare(.d4);
+    // bit_board.setSquare(.c4);
 
     try bit_board.print(stdout_writer);
+    try stdout_writer.print("\n Hex:{x}\n", .{bit_board.mask});
 
     try stdout_writer.flush(); // Don't forget to flush!
 }

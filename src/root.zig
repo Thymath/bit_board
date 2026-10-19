@@ -161,6 +161,52 @@ pub fn init_knight_attacks() [64]BitBoard {
     return attacks;
 }
 
+/// king attacks table [square]
+pub const king_attacks: [64]BitBoard = init_king_attacks();
+
+pub fn mask_king_attacks(square: u8) BitBoard {
+    @setEvalBranchQuota(100_000);
+    var attacks = BitBoard.empty;
+
+    if (not_a_file.isSet(square)) {
+        if (square > 8) {
+            attacks.set(square - 9);
+        }
+        attacks.set(square - 1);
+        if (square < 54) {
+            attacks.set(square + 7);
+        }
+    }
+
+    if (not_h_file.isSet(square)) {
+        if (square > 8) {
+            attacks.set(square - 7);
+        }
+        attacks.set(square + 1);
+        if (square < 54) {
+            attacks.set(square + 9);
+        }
+    }
+
+    if (square < 54) {
+        attacks.set(square + 8);
+    }
+
+    if (square > 8) {
+        attacks.set(square - 8);
+    }
+
+    return attacks;
+}
+
+pub fn init_king_attacks() [64]BitBoard {
+    var attacks: [64]BitBoard = @splat(BitBoard.empty);
+    for (0..64) |square| {
+        attacks[square] = mask_king_attacks(@intCast(square));
+    }
+    return attacks;
+}
+
 // ===========================================================================
 //
 //  Tests
@@ -1253,4 +1299,72 @@ test "the main driver sequence: init the table, then print every square, a8 firs
         );
         rest = number[end..];
     }
+}
+
+// ===========================================================================
+//
+//  Tests: pre-calculated king attacks
+//
+// ===========================================================================
+
+test "king: the table is indexed by square alone, the kings of both sides attack the same squares" {
+    try std.testing.expectEqual(@as(usize, 64), @typeInfo(@TypeOf(king_attacks)).array.len);
+    try std.testing.expectEqual(BitBoard, @typeInfo(@TypeOf(king_attacks)).array.child);
+}
+
+test "mask_king_attacks: a knight in the middle of the board attacks the 8 squares around it" {
+    try std.testing.expectEqual(
+        @as(u64, 0x0000_1C14_1c00_0000), // c3, d3, e3, c4, e4, c5, d5, e5
+        mask_king_attacks(@intFromEnum(BoardSquares.d4)).mask,
+    );
+    try std.testing.expectEqual(
+        @as(u64, 0x0000_3828_3800_0000), // d3, e3, f3, d4, f4, d5, e5, f5
+        mask_king_attacks(@intFromEnum(BoardSquares.e4)).mask,
+    );
+    try std.testing.expectEqual(
+        @as(u64, 0x0000_0e0a_0e00_0000), // b3, c3, d3, b4, d4, b5, c5, d5
+        mask_king_attacks(@intFromEnum(BoardSquares.c4)).mask,
+    );
+    try std.testing.expectEqual(
+        @as(u65, 0x0000_001c_141c_0000), // c4, d4, e4, c5, e5, c6, d6, e6
+        mask_king_attacks(@intFromEnum(BoardSquares.d5)).mask,
+    );
+}
+
+test "mask_king_attacks: a king on the border only attacks closest file/rank" {
+    try std.testing.expectEqual(
+        @as(u64, 0x0000_0302_0300_0000), // a3, a5, b3, b4, b5
+        mask_king_attacks(@intFromEnum(BoardSquares.a4)).mask,
+    );
+    try std.testing.expectEqual(
+        @as(u64, 0x2838_0000_0000_0000), // d1, f1, d2, e2, f2
+        mask_king_attacks(@intFromEnum(BoardSquares.e1)).mask,
+    );
+    try std.testing.expectEqual(
+        @as(u64, 0x0000_0000_0000_1c14), // c7, d7, e7, c8, e8
+        mask_king_attacks(@intFromEnum(BoardSquares.d8)).mask,
+    );
+    try std.testing.expectEqual(
+        @as(u64, 0x00c0_40c0_0000_0000), // g2, g3, g4, h2, h4
+        mask_king_attacks(@intFromEnum(BoardSquares.h3)).mask,
+    );
+}
+
+test "mask_king_attacks: a king on a corner attacks only the 3 squares it can reach" {
+    try std.testing.expectEqual(
+        @as(u64, 0x0000_0000_0000_0302), // a7, b7, b8
+        mask_king_attacks(@intFromEnum(BoardSquares.a8)).mask,
+    );
+    try std.testing.expectEqual(
+        @as(u64, 0x0000_0000_0000_c040), // h7, g7, g8
+        mask_king_attacks(@intFromEnum(BoardSquares.h8)).mask,
+    );
+    try std.testing.expectEqual(
+        @as(u64, 0x0203_0000_0000_0000), // a2, b1, b2
+        mask_king_attacks(@intFromEnum(BoardSquares.a1)).mask,
+    );
+    try std.testing.expectEqual(
+        @as(u64, 0x40c0_0000_0000_0000), // h2, g1, g2
+        mask_king_attacks(@intFromEnum(BoardSquares.h1)).mask,
+    );
 }
