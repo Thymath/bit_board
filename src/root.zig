@@ -6,7 +6,8 @@
 
 const std = @import("std");
 const Io = std.Io;
-const BitBoard = @import("board.zig");
+pub const BitBoard = @import("board.zig");
+pub const BoardSquares = BitBoard.BoardSquares;
 
 // ===========================================================================
 //
@@ -174,39 +175,39 @@ fn rendered(bitboard: BitBoard, buffer: []u8) ![]u8 {
     return writer.buffered();
 }
 
-test "BitBoard.BoardSquares: the 64 squares are numbered from a8 to h1" {
+test "BoardSquares: the 64 squares are numbered from a8 to h1" {
     // rank 8
-    try std.testing.expectEqual(@as(u6, 0), @intFromEnum(BitBoard.BoardSquares.a8));
-    try std.testing.expectEqual(@as(u6, 1), @intFromEnum(BitBoard.BoardSquares.b8));
-    try std.testing.expectEqual(@as(u6, 2), @intFromEnum(BitBoard.BoardSquares.c8));
-    try std.testing.expectEqual(@as(u6, 3), @intFromEnum(BitBoard.BoardSquares.d8));
-    try std.testing.expectEqual(@as(u6, 4), @intFromEnum(BitBoard.BoardSquares.e8));
-    try std.testing.expectEqual(@as(u6, 5), @intFromEnum(BitBoard.BoardSquares.f8));
-    try std.testing.expectEqual(@as(u6, 6), @intFromEnum(BitBoard.BoardSquares.g8));
-    try std.testing.expectEqual(@as(u6, 7), @intFromEnum(BitBoard.BoardSquares.h8));
+    try std.testing.expectEqual(@as(u6, 0), @intFromEnum(BoardSquares.a8));
+    try std.testing.expectEqual(@as(u6, 1), @intFromEnum(BoardSquares.b8));
+    try std.testing.expectEqual(@as(u6, 2), @intFromEnum(BoardSquares.c8));
+    try std.testing.expectEqual(@as(u6, 3), @intFromEnum(BoardSquares.d8));
+    try std.testing.expectEqual(@as(u6, 4), @intFromEnum(BoardSquares.e8));
+    try std.testing.expectEqual(@as(u6, 5), @intFromEnum(BoardSquares.f8));
+    try std.testing.expectEqual(@as(u6, 6), @intFromEnum(BoardSquares.g8));
+    try std.testing.expectEqual(@as(u6, 7), @intFromEnum(BoardSquares.h8));
 
     // rank 7
-    try std.testing.expectEqual(@as(u6, 8), @intFromEnum(BitBoard.BoardSquares.a7));
-    try std.testing.expectEqual(@as(u6, 15), @intFromEnum(BitBoard.BoardSquares.h7));
+    try std.testing.expectEqual(@as(u6, 8), @intFromEnum(BoardSquares.a7));
+    try std.testing.expectEqual(@as(u6, 15), @intFromEnum(BoardSquares.h7));
 
     // some squares in the middle of the board
-    try std.testing.expectEqual(@as(u6, 28), @intFromEnum(BitBoard.BoardSquares.e5));
-    try std.testing.expectEqual(@as(u6, 32), @intFromEnum(BitBoard.BoardSquares.a4));
-    try std.testing.expectEqual(@as(u6, 35), @intFromEnum(BitBoard.BoardSquares.d4));
-    try std.testing.expectEqual(@as(u6, 36), @intFromEnum(BitBoard.BoardSquares.e4));
-    try std.testing.expectEqual(@as(u6, 42), @intFromEnum(BitBoard.BoardSquares.c3));
-    try std.testing.expectEqual(@as(u6, 49), @intFromEnum(BitBoard.BoardSquares.b2));
-    try std.testing.expectEqual(@as(u6, 53), @intFromEnum(BitBoard.BoardSquares.f2));
+    try std.testing.expectEqual(@as(u6, 28), @intFromEnum(BoardSquares.e5));
+    try std.testing.expectEqual(@as(u6, 32), @intFromEnum(BoardSquares.a4));
+    try std.testing.expectEqual(@as(u6, 35), @intFromEnum(BoardSquares.d4));
+    try std.testing.expectEqual(@as(u6, 36), @intFromEnum(BoardSquares.e4));
+    try std.testing.expectEqual(@as(u6, 42), @intFromEnum(BoardSquares.c3));
+    try std.testing.expectEqual(@as(u6, 49), @intFromEnum(BoardSquares.b2));
+    try std.testing.expectEqual(@as(u6, 53), @intFromEnum(BoardSquares.f2));
 
     // rank 1
-    try std.testing.expectEqual(@as(u6, 56), @intFromEnum(BitBoard.BoardSquares.a1));
-    try std.testing.expectEqual(@as(u6, 60), @intFromEnum(BitBoard.BoardSquares.e1));
-    try std.testing.expectEqual(@as(u6, 62), @intFromEnum(BitBoard.BoardSquares.g1));
-    try std.testing.expectEqual(@as(u6, 63), @intFromEnum(BitBoard.BoardSquares.h1));
+    try std.testing.expectEqual(@as(u6, 56), @intFromEnum(BoardSquares.a1));
+    try std.testing.expectEqual(@as(u6, 60), @intFromEnum(BoardSquares.e1));
+    try std.testing.expectEqual(@as(u6, 62), @intFromEnum(BoardSquares.g1));
+    try std.testing.expectEqual(@as(u6, 63), @intFromEnum(BoardSquares.h1));
 }
 
-test "BitBoard.BoardSquares: every square of the board is declared exactly once" {
-    const info = @typeInfo(BitBoard.BoardSquares).@"enum";
+test "BoardSquares: every square of the board is declared exactly once" {
+    const info = @typeInfo(BoardSquares).@"enum";
     try std.testing.expectEqual(@as(usize, 64), info.field_values.len);
 
     var seen: [64]bool = @splat(false);
@@ -276,7 +277,7 @@ test "set_bit: keeps every bit that was already set" {
 }
 
 test "set_bit: setting the same square twice does not change the bitboard" {
-    const e4: u6 = @intFromEnum(BitBoard.BoardSquares.e4);
+    const e4: u6 = @intFromEnum(BoardSquares.e4);
 
     var e4_board = BitBoard.empty;
     e4_board.set(e4);
@@ -291,17 +292,17 @@ test "get_bit: tells whether the bit of a square is set" {
     var bitboard = BitBoard.empty;
     bitboard.mask = 0x0020_0410_0000_0000;
 
-    try std.testing.expect(bitboard.isSet(@intFromEnum(BitBoard.BoardSquares.e4)));
-    try std.testing.expect(bitboard.isSet(@intFromEnum(BitBoard.BoardSquares.c3)));
-    try std.testing.expect(bitboard.isSet(@intFromEnum(BitBoard.BoardSquares.f2)));
+    try std.testing.expect(bitboard.isSet(@intFromEnum(BoardSquares.e4)));
+    try std.testing.expect(bitboard.isSet(@intFromEnum(BoardSquares.c3)));
+    try std.testing.expect(bitboard.isSet(@intFromEnum(BoardSquares.f2)));
 
-    try std.testing.expect(!bitboard.isSet(@intFromEnum(BitBoard.BoardSquares.a8)));
-    try std.testing.expect(!bitboard.isSet(@intFromEnum(BitBoard.BoardSquares.h8)));
-    try std.testing.expect(!bitboard.isSet(@intFromEnum(BitBoard.BoardSquares.e5)));
-    try std.testing.expect(!bitboard.isSet(@intFromEnum(BitBoard.BoardSquares.d4)));
-    try std.testing.expect(!bitboard.isSet(@intFromEnum(BitBoard.BoardSquares.a1)));
-    try std.testing.expect(!bitboard.isSet(@intFromEnum(BitBoard.BoardSquares.e1)));
-    try std.testing.expect(!bitboard.isSet(@intFromEnum(BitBoard.BoardSquares.h1)));
+    try std.testing.expect(!bitboard.isSet(@intFromEnum(BoardSquares.a8)));
+    try std.testing.expect(!bitboard.isSet(@intFromEnum(BoardSquares.h8)));
+    try std.testing.expect(!bitboard.isSet(@intFromEnum(BoardSquares.e5)));
+    try std.testing.expect(!bitboard.isSet(@intFromEnum(BoardSquares.d4)));
+    try std.testing.expect(!bitboard.isSet(@intFromEnum(BoardSquares.a1)));
+    try std.testing.expect(!bitboard.isSet(@intFromEnum(BoardSquares.e1)));
+    try std.testing.expect(!bitboard.isSet(@intFromEnum(BoardSquares.h1)));
 
     const empty_board = BitBoard.empty;
     // no bit of an empty bitboard is set
@@ -370,7 +371,7 @@ test "pop_bit: leaves the bitboard untouched when the bit is not set" {
 }
 
 test "pop_bit: popping the same square twice does not bring the bit back" {
-    const e4: u6 = @intFromEnum(BitBoard.BoardSquares.e4);
+    const e4: u6 = @intFromEnum(BoardSquares.e4);
     var bitboard = BitBoard.empty;
     bitboard.set(e4);
 
@@ -534,9 +535,9 @@ test "the main driver sequence: set e4, c3 & f2, print, pop e4, print" {
 
     // setting some bits
     var bitboard = BitBoard.empty;
-    bitboard.set(@intFromEnum(BitBoard.BoardSquares.e4));
-    bitboard.set(@intFromEnum(BitBoard.BoardSquares.c3));
-    bitboard.set(@intFromEnum(BitBoard.BoardSquares.f2));
+    bitboard.set(@intFromEnum(BoardSquares.e4));
+    bitboard.set(@intFromEnum(BoardSquares.c3));
+    bitboard.set(@intFromEnum(BoardSquares.f2));
 
     // print bitboard
     var buffer: [2048]u8 = undefined;
@@ -544,7 +545,7 @@ test "the main driver sequence: set e4, c3 & f2, print, pop e4, print" {
     try bitboard.print(&writer);
 
     // reset bit
-    bitboard.unset(@intFromEnum(BitBoard.BoardSquares.e4));
+    bitboard.unset(@intFromEnum(BoardSquares.e4));
 
     // print bitboard
     try bitboard.print(&writer);
@@ -716,41 +717,41 @@ test "print_bitboard: prints not_ab_file" {
 test "mask_pawn_attacks: a white pawn attacks the 2 squares diagonally in front of it" {
     try std.testing.expectEqual(
         @as(u64, 0x0000_0000_2800_0000), // d5 and f5
-        mask_pawn_attacks(sides.white, @intFromEnum(BitBoard.BoardSquares.e4)).mask,
+        mask_pawn_attacks(sides.white, @intFromEnum(BoardSquares.e4)).mask,
     );
     try std.testing.expectEqual(
         @as(u64, 0x0000_0000_0500_0000), // a5 and c5
-        mask_pawn_attacks(sides.white, @intFromEnum(BitBoard.BoardSquares.b4)).mask,
+        mask_pawn_attacks(sides.white, @intFromEnum(BoardSquares.b4)).mask,
     );
     try std.testing.expectEqual(
         @as(u64, 0x0000_0000_0A00_0000), // b5 and d5
-        mask_pawn_attacks(sides.white, @intFromEnum(BitBoard.BoardSquares.c4)).mask,
+        mask_pawn_attacks(sides.white, @intFromEnum(BoardSquares.c4)).mask,
     );
     try std.testing.expectEqual(
         @as(u64, 0x0028_0000_0000_0000), // d2 and f2
-        mask_pawn_attacks(sides.white, @intFromEnum(BitBoard.BoardSquares.e1)).mask,
+        mask_pawn_attacks(sides.white, @intFromEnum(BoardSquares.e1)).mask,
     );
 }
 
 test "mask_pawn_attacks: a white pawn on the a file has only 1 attack, on the b file" {
     try std.testing.expectEqual(
         @as(u64, 0x0000_0000_0200_0000), // b5
-        mask_pawn_attacks(sides.white, @intFromEnum(BitBoard.BoardSquares.a4)).mask,
+        mask_pawn_attacks(sides.white, @intFromEnum(BoardSquares.a4)).mask,
     );
     try std.testing.expectEqual(
         @as(u64, 0x0000_0000_0000_0002), // b8
-        mask_pawn_attacks(sides.white, @intFromEnum(BitBoard.BoardSquares.a7)).mask,
+        mask_pawn_attacks(sides.white, @intFromEnum(BoardSquares.a7)).mask,
     );
 }
 
 test "mask_pawn_attacks: a white pawn on the h file has only 1 attack, on the g file" {
     try std.testing.expectEqual(
         @as(u64, 0x0000_0000_4000_0000), // g5
-        mask_pawn_attacks(sides.white, @intFromEnum(BitBoard.BoardSquares.h4)).mask,
+        mask_pawn_attacks(sides.white, @intFromEnum(BoardSquares.h4)).mask,
     );
     try std.testing.expectEqual(
         @as(u64, 0x0000_0000_0000_0040), // g8
-        mask_pawn_attacks(sides.white, @intFromEnum(BitBoard.BoardSquares.h7)).mask,
+        mask_pawn_attacks(sides.white, @intFromEnum(BoardSquares.h7)).mask,
     );
 }
 
@@ -766,37 +767,37 @@ test "mask_pawn_attacks: a white pawn on the 8th rank attacks nothing, there is 
 test "mask_pawn_attacks: a black pawn attacks the 2 squares diagonally behind it" {
     try std.testing.expectEqual(
         @as(u64, 0x0000_2800_0000_0000), // d3 and f3
-        mask_pawn_attacks(sides.black, @intFromEnum(BitBoard.BoardSquares.e4)).mask,
+        mask_pawn_attacks(sides.black, @intFromEnum(BoardSquares.e4)).mask,
     );
     try std.testing.expectEqual(
         @as(u64, 0x0000_0500_0000_0000), // a3 and c3
-        mask_pawn_attacks(sides.black, @intFromEnum(BitBoard.BoardSquares.b4)).mask,
+        mask_pawn_attacks(sides.black, @intFromEnum(BoardSquares.b4)).mask,
     );
     try std.testing.expectEqual(
         @as(u64, 0x0000_0028_0000_0000), // d4 and f4
-        mask_pawn_attacks(sides.black, @intFromEnum(BitBoard.BoardSquares.e5)).mask,
+        mask_pawn_attacks(sides.black, @intFromEnum(BoardSquares.e5)).mask,
     );
 }
 
 test "mask_pawn_attacks: a black pawn on the a file has only 1 attack, on the b file" {
     try std.testing.expectEqual(
         @as(u64, 0x0000_0200_0000_0000), // b3
-        mask_pawn_attacks(sides.black, @intFromEnum(BitBoard.BoardSquares.a4)).mask,
+        mask_pawn_attacks(sides.black, @intFromEnum(BoardSquares.a4)).mask,
     );
     try std.testing.expectEqual(
         @as(u64, 0x0200_0000_0000_0000), // b1
-        mask_pawn_attacks(sides.black, @intFromEnum(BitBoard.BoardSquares.a2)).mask,
+        mask_pawn_attacks(sides.black, @intFromEnum(BoardSquares.a2)).mask,
     );
 }
 
 test "mask_pawn_attacks: a black pawn on the h file has only 1 attack, on the g file" {
     try std.testing.expectEqual(
         @as(u64, 0x0000_4000_0000_0000), // g3
-        mask_pawn_attacks(sides.black, @intFromEnum(BitBoard.BoardSquares.h4)).mask,
+        mask_pawn_attacks(sides.black, @intFromEnum(BoardSquares.h4)).mask,
     );
     try std.testing.expectEqual(
         @as(u64, 0x4000_0000_0000_0000), // g1
-        mask_pawn_attacks(sides.black, @intFromEnum(BitBoard.BoardSquares.h2)).mask,
+        mask_pawn_attacks(sides.black, @intFromEnum(BoardSquares.h2)).mask,
     );
 }
 
@@ -850,7 +851,7 @@ test "mask_pawn_attacks: every square of both sides matches the pre-calculated t
 
             std.debug.print(
                 "unexpected attacks of the {s} pawn standing on {s}\n",
-                .{ @tagName(side), @tagName(@as(BitBoard.BoardSquares, @enumFromInt(square))) },
+                .{ @tagName(side), @tagName(@as(BoardSquares, @enumFromInt(square))) },
             );
             return error.TestUnexpectedResult;
         }
@@ -864,7 +865,7 @@ test "init_leapers_attacks: fills all 128 entries of the table" {
 
             std.debug.print(
                 "unexpected entry for the {s} pawn standing on {s}\n",
-                .{ @tagName(@as(sides, @enumFromInt(side_index))), @tagName(@as(BitBoard.BoardSquares, @enumFromInt(square))) },
+                .{ @tagName(@as(sides, @enumFromInt(side_index))), @tagName(@as(BoardSquares, @enumFromInt(square))) },
             );
             return error.TestUnexpectedResult;
         }
@@ -904,18 +905,18 @@ test "pawn_attacks: the first index is the side and the second one is the square
 
     // the same square is attacked in 2 different ways, one per side
     try std.testing.expect(
-        pawn_attacks[white][@intFromEnum(BitBoard.BoardSquares.e4)].mask !=
-            pawn_attacks[black][@intFromEnum(BitBoard.BoardSquares.e4)].mask,
+        pawn_attacks[white][@intFromEnum(BoardSquares.e4)].mask !=
+            pawn_attacks[black][@intFromEnum(BoardSquares.e4)].mask,
     );
 
     // and the 2 sides never look the same way
     try std.testing.expectEqual(
         @as(u64, 0),
-        pawn_attacks[white][@intFromEnum(BitBoard.BoardSquares.e8)].mask,
+        pawn_attacks[white][@intFromEnum(BoardSquares.e8)].mask,
     );
     try std.testing.expectEqual(
         @as(u64, 0),
-        pawn_attacks[black][@intFromEnum(BitBoard.BoardSquares.e1)].mask,
+        pawn_attacks[black][@intFromEnum(BoardSquares.e1)].mask,
     );
 }
 
@@ -976,93 +977,93 @@ test "knight_attacks: the table is indexed by square alone, the knights of both 
 test "mask_knight_attacks: a knight in the middle of the board attacks the 8 squares around it" {
     try std.testing.expectEqual(
         @as(u64, 0x0014_2200_2214_0000), // b3, b5, c2, c6, e2, e6, f3, f5
-        mask_knight_attacks(@intFromEnum(BitBoard.BoardSquares.d4)).mask,
+        mask_knight_attacks(@intFromEnum(BoardSquares.d4)).mask,
     );
     try std.testing.expectEqual(
         @as(u64, 0x0028_4400_4428_0000), // c3, c5, d2, d6, f2, f6, g3, g5
-        mask_knight_attacks(@intFromEnum(BitBoard.BoardSquares.e4)).mask,
+        mask_knight_attacks(@intFromEnum(BoardSquares.e4)).mask,
     );
     try std.testing.expectEqual(
         @as(u64, 0x000A_1100_110A_0000), // a3, a5, b2, b6, d2, d6, e3, e5
-        mask_knight_attacks(@intFromEnum(BitBoard.BoardSquares.c4)).mask,
+        mask_knight_attacks(@intFromEnum(BoardSquares.c4)).mask,
     );
     try std.testing.expectEqual(
         @as(u64, 0x0000_1422_0022_1400), // b4, b6, c3, c7, e3, e7, f4, f6
-        mask_knight_attacks(@intFromEnum(BitBoard.BoardSquares.d5)).mask,
+        mask_knight_attacks(@intFromEnum(BoardSquares.d5)).mask,
     );
 }
 
 test "mask_knight_attacks: a knight on a corner attacks only the 2 squares it can reach" {
     try std.testing.expectEqual(
         @as(u64, 0x0000_0000_0002_0400), // b6, c7
-        mask_knight_attacks(@intFromEnum(BitBoard.BoardSquares.a8)).mask,
+        mask_knight_attacks(@intFromEnum(BoardSquares.a8)).mask,
     );
     try std.testing.expectEqual(
         @as(u64, 0x0000_0000_0040_2000), // f7, g6
-        mask_knight_attacks(@intFromEnum(BitBoard.BoardSquares.h8)).mask,
+        mask_knight_attacks(@intFromEnum(BoardSquares.h8)).mask,
     );
     try std.testing.expectEqual(
         @as(u64, 0x0004_0200_0000_0000), // b3, c2
-        mask_knight_attacks(@intFromEnum(BitBoard.BoardSquares.a1)).mask,
+        mask_knight_attacks(@intFromEnum(BoardSquares.a1)).mask,
     );
     try std.testing.expectEqual(
         @as(u64, 0x0020_4000_0000_0000), // f2, g3
-        mask_knight_attacks(@intFromEnum(BitBoard.BoardSquares.h1)).mask,
+        mask_knight_attacks(@intFromEnum(BoardSquares.h1)).mask,
     );
 }
 
 test "mask_knight_attacks: a knight on the a file attacks the b and the c files only, and the other way round" {
     try std.testing.expectEqual(
         @as(u64, 0x0002_0400_0402_0000), // b2, b6, c3, c5
-        mask_knight_attacks(@intFromEnum(BitBoard.BoardSquares.a4)).mask,
+        mask_knight_attacks(@intFromEnum(BoardSquares.a4)).mask,
     );
     try std.testing.expectEqual(
         @as(u64, 0x0000_0204_0004_0200), // b3, b7, c4, c6
-        mask_knight_attacks(@intFromEnum(BitBoard.BoardSquares.a5)).mask,
+        mask_knight_attacks(@intFromEnum(BoardSquares.a5)).mask,
     );
     try std.testing.expectEqual(
         @as(u64, 0x0204_0004_0200_0000), // b1, b5, c2, c4
-        mask_knight_attacks(@intFromEnum(BitBoard.BoardSquares.a3)).mask,
+        mask_knight_attacks(@intFromEnum(BoardSquares.a3)).mask,
     );
     try std.testing.expectEqual(
         @as(u64, 0x0000_0000_0204_0004), // b5, c6, c8
-        mask_knight_attacks(@intFromEnum(BitBoard.BoardSquares.a7)).mask,
+        mask_knight_attacks(@intFromEnum(BoardSquares.a7)).mask,
     );
 
     try std.testing.expectEqual(
         @as(u64, 0x0040_2000_2040_0000), // f3, f5, g2, g6
-        mask_knight_attacks(@intFromEnum(BitBoard.BoardSquares.h4)).mask,
+        mask_knight_attacks(@intFromEnum(BoardSquares.h4)).mask,
     );
     try std.testing.expectEqual(
         @as(u64, 0x0000_4020_0020_4000), // f4, f6, g3, g7
-        mask_knight_attacks(@intFromEnum(BitBoard.BoardSquares.h5)).mask,
+        mask_knight_attacks(@intFromEnum(BoardSquares.h5)).mask,
     );
     try std.testing.expectEqual(
         @as(u64, 0x4020_0020_4000_0000), // f2, f4, g1, g5
-        mask_knight_attacks(@intFromEnum(BitBoard.BoardSquares.h3)).mask,
+        mask_knight_attacks(@intFromEnum(BoardSquares.h3)).mask,
     );
     try std.testing.expectEqual(
         @as(u64, 0x0000_0000_4020_0020), // f6, f8, g5
-        mask_knight_attacks(@intFromEnum(BitBoard.BoardSquares.h7)).mask,
+        mask_knight_attacks(@intFromEnum(BoardSquares.h7)).mask,
     );
 }
 
 test "mask_knight_attacks: a knight on the b or the g file attacks the 3 or 4 squares it can reach" {
     try std.testing.expectEqual(
         @as(u64, 0x0008_0500_0000_0000), // a3, c3, d2
-        mask_knight_attacks(@intFromEnum(BitBoard.BoardSquares.b1)).mask,
+        mask_knight_attacks(@intFromEnum(BoardSquares.b1)).mask,
     );
     try std.testing.expectEqual(
         @as(u64, 0x0010_A000_0000_0000), // e2, f3, h3
-        mask_knight_attacks(@intFromEnum(BitBoard.BoardSquares.g1)).mask,
+        mask_knight_attacks(@intFromEnum(BoardSquares.g1)).mask,
     );
     try std.testing.expectEqual(
         @as(u64, 0x0800_0805_0000_0000), // a4, c4, d1, d3
-        mask_knight_attacks(@intFromEnum(BitBoard.BoardSquares.b2)).mask,
+        mask_knight_attacks(@intFromEnum(BoardSquares.b2)).mask,
     );
     try std.testing.expectEqual(
         @as(u64, 0x1000_10A0_0000_0000), // e1, e3, f4, h4
-        mask_knight_attacks(@intFromEnum(BitBoard.BoardSquares.g2)).mask,
+        mask_knight_attacks(@intFromEnum(BoardSquares.g2)).mask,
     );
 }
 
@@ -1101,7 +1102,7 @@ test "mask_knight_attacks: every square matches the pre-calculated table" {
 
         std.debug.print(
             "unexpected attacks of the knight standing on {s}\n",
-            .{@tagName(@as(BitBoard.BoardSquares, @enumFromInt(square)))},
+            .{@tagName(@as(BoardSquares, @enumFromInt(square)))},
         );
         return error.TestUnexpectedResult;
     }
@@ -1113,7 +1114,7 @@ test "knight_attacks: fills all 64 entries of the table" {
 
         std.debug.print(
             "unexpected entry for the knight standing on {s}\n",
-            .{@tagName(@as(BitBoard.BoardSquares, @enumFromInt(square)))},
+            .{@tagName(@as(BoardSquares, @enumFromInt(square)))},
         );
         return error.TestUnexpectedResult;
     }
@@ -1152,19 +1153,19 @@ test "knight_attacks: a knight has 2 attacks on a corner, at most 4 on the edge 
 test "knight_attacks: a knight standing in the middle of the board attacks 8 squares" {
     try std.testing.expectEqual(
         @as(usize, 8),
-        knight_attacks[@intFromEnum(BitBoard.BoardSquares.d4)].count(),
+        knight_attacks[@intFromEnum(BoardSquares.d4)].count(),
     );
     try std.testing.expectEqual(
         @as(usize, 8),
-        knight_attacks[@intFromEnum(BitBoard.BoardSquares.e4)].count(),
+        knight_attacks[@intFromEnum(BoardSquares.e4)].count(),
     );
     try std.testing.expectEqual(
         @as(usize, 6),
-        knight_attacks[@intFromEnum(BitBoard.BoardSquares.c2)].count(),
+        knight_attacks[@intFromEnum(BoardSquares.c2)].count(),
     );
     try std.testing.expectEqual(
         @as(usize, 4),
-        knight_attacks[@intFromEnum(BitBoard.BoardSquares.b2)].count(),
+        knight_attacks[@intFromEnum(BoardSquares.b2)].count(),
     );
 }
 
@@ -1201,7 +1202,7 @@ test "print_bitboard: prints the attacks of the knight standing on d4" {
         "\n";
 
     var buffer: [2048]u8 = undefined;
-    const actual = try rendered(knight_attacks[@intFromEnum(BitBoard.BoardSquares.d4)], &buffer);
+    const actual = try rendered(knight_attacks[@intFromEnum(BoardSquares.d4)], &buffer);
     try std.testing.expectEqualStrings(expected, actual);
 }
 
@@ -1223,7 +1224,7 @@ test "print_bitboard: prints the attacks of the knight standing on a1" {
         "\n";
 
     var buffer: [2048]u8 = undefined;
-    const actual = try rendered(knight_attacks[@intFromEnum(BitBoard.BoardSquares.a1)], &buffer);
+    const actual = try rendered(knight_attacks[@intFromEnum(BoardSquares.a1)], &buffer);
     try std.testing.expectEqualStrings(expected, actual);
 }
 

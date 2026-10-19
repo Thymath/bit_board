@@ -102,8 +102,6 @@ pub const IteratorOptions = struct {
 
 const Self = @This();
 
-// TODO: Make this a comptime field once those are fixed
-/// The number of items in this bit set
 pub const bit_length: usize = 64;
 
 /// The integer type used to represent a mask in this bit set
@@ -147,6 +145,12 @@ pub fn setValue(self: *Self, index: usize, value: bool) void {
     const bit = maskBit(index);
     const new_bit = bit & std.math.boolMask(MaskInt, value);
     self.mask = (self.mask & ~bit) | new_bit;
+}
+
+/// Adds a specific bit to the bit set
+pub fn setSquare(self: *Self, square: BoardSquares) void {
+    const index: u8 = @intFromEnum(square);
+    self.set(index);
 }
 
 /// Adds a specific bit to the bit set
@@ -389,4 +393,5 @@ pub fn print(bitboard: Self, writer: *Io.Writer) Io.Writer.Error!void {
     }
     try writer.print("\n\n     a b c d e f g h", .{});
     try writer.print("\n\n     BitBoard: {}\n\n", .{bitboard.mask});
+    // try writer.print("\n\n     BitBoard: {x}\n\n", .{bitboard.mask});
 }
